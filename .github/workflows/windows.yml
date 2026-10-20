@@ -1,0 +1,29 @@
+name: Build Windows app
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Offline storage and synchronization tests
+        run: dotnet run --project tests/Rakam.CustomerApp.Tests -c Release
+      - name: Publish Windows x64 (self contained)
+        run: dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o dist/Rakam-Customer-App
+      - name: Include guide
+        run: Copy-Item README.md dist/Rakam-Customer-App/README.md
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rakam-Customer-App-Windows-x64
+          path: dist/Rakam-Customer-App/
+          retention-days: 30
