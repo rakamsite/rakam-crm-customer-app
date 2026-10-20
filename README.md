@@ -5,10 +5,16 @@
 ## دریافت و اجرا
 
 1. در [Actions → Build Windows app](https://github.com/rakamsite/rakam-crm-customer-app/actions/workflows/windows.yml)، آخرین اجرای **سبز** را باز کنید.
-2. از بخش Artifacts، بسته **Rakam-Customer-App-Windows-x64** را دانلود کنید.
-3. فایل ZIP را کامل Extract کنید؛ فایل‌های کنار برنامه را جدا یا حذف نکنید.
-4. **Rakam.CustomerApp.exe** را اجرا کنید. نصب جداگانه .NET لازم نیست؛ بسته self-contained است.
-5. Windows 10/11 نسخه x64 و **Microsoft Edge WebView2 Runtime** لازم است. اگر موجود نبود، از [صفحه رسمی دانلود WebView2](https://developer.microsoft.com/microsoft-edge/webview2/#download) نصب کنید. برای سیستم بدون اینترنت، Evergreen Standalone Installer x64 را از قبل دانلود کنید.
+2. از بخش Artifacts، بسته **Rakam-Customer-App-Setup-Windows-x64** را دانلود و ZIP آن را باز کنید؛ داخل آن فقط **Rakam-Customer-App-Setup.exe** است.
+3. فایل Setup را اجرا کنید. نصب برای همین حساب ویندوز انجام می‌شود و دسترسی Administrator لازم ندارد.
+4. پس از نصب، برنامه را از آیکن **ثبت مراجعان راکام** روی دسکتاپ یا منوی Start باز کنید. فایل‌های داخلی در مسیر نصب نگهداری می‌شوند.
+5. Windows 10/11 نسخه x64 و **Microsoft Edge WebView2 Runtime** لازم است. اگر موجود نبود، از [صفحه رسمی دانلود WebView2](https://developer.microsoft.com/microsoft-edge/webview2/#download) نصب کنید. نصب جداگانه .NET لازم نیست.
+
+فونت **وزیر ۳۰.۱.۰** داخل برنامه همراه مجوز OFL قرار دارد؛ به اینترنت یا نصب فونت در ویندوز وابسته نیست.
+
+به‌روزرسانی با اجرای نصاب جدید روی همان حساب و همان مسیر نصب انجام می‌شود. دیتابیس، صف ارسال، اتصال و پشتیبان‌ها در مسیر مستقل `%LOCALAPPDATA%\Rakam\CustomerApp` باقی می‌مانند؛ حذف برنامه هم این اطلاعات را حذف نمی‌کند. نسخه قبلی را پیش از نصب ببندید و نسخه جدید را با همان حساب ویندوز اجرا کنید.
+
+برای استفاده پرتابل، بسته **Rakam-Customer-App-Windows-x64** همچنان موجود است؛ در این حالت همه فایل‌های پوشه باید کنار هم بمانند.
 
 این نسخه امضای تجاری ندارد و ممکن است Windows SmartScreen نام ناشر را ناشناخته نشان دهد. فقط بسته ساخته‌شده از همین مخزن و اجرای موفق را استفاده کنید.
 

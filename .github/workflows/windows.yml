@@ -21,6 +21,37 @@ jobs:
         run: dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o dist/Rakam-Customer-App
       - name: Include guide
         run: Copy-Item README.md dist/Rakam-Customer-App/README.md
+      - name: Verify offline fonts and build installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($font in @('Vazir-Regular.woff2', 'Vazir-Bold.woff2', 'OFL.txt')) {
+            if (-not (Test-Path "dist/Rakam-Customer-App/ui/fonts/$font")) { throw "Missing bundled font: $font" }
+          }
+          & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" installer/customer-app.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
+      - name: Verify installation and removal preserve local data
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $data = Join-Path $env:LOCALAPPDATA 'Rakam/CustomerApp'
+          New-Item -ItemType Directory -Force $data | Out-Null
+          $marker = Join-Path $data 'installer-preservation-check.txt'
+          Set-Content $marker 'keep-local-data'
+          $setup = Start-Process dist/installer/Rakam-Customer-App-Setup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LOG=dist/install.log' -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
+          $app = Join-Path $env:LOCALAPPDATA 'Programs/Rakam/CustomerApp'
+          if (-not (Test-Path "$app/Rakam.CustomerApp.exe")) { throw 'Installed executable missing' }
+          if (-not (Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')))) { throw 'Desktop shortcut missing' }
+          $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
+          if ((Get-Content $marker) -ne 'keep-local-data') { throw 'Local data was changed or deleted' }
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rakam-Customer-App-Setup-Windows-x64
+          path: dist/installer/Rakam-Customer-App-Setup.exe
+          retention-days: 30
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
