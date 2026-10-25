@@ -88,6 +88,12 @@ public sealed class OfficeStore
         if (command.Data.ValueKind != JsonValueKind.Object) throw new InvalidDataException("اطلاعات فرم معتبر نیست.");
         foreach (var id in command.Files) _ = File(id);
         using var db = Open();
+        using (var existing = db.CreateCommand())
+        {
+            existing.CommandText = "SELECT payload FROM office_commands WHERE id=$id"; existing.Parameters.AddWithValue("$id", command.Uuid);
+            if (existing.ExecuteScalar() is string previous && previous != Wire.Encode(command))
+                throw new InvalidDataException("این ثبت قبلاً وارد صف شده است؛ برای متن متفاوت، ثبت تازه بسازید. متن فعلی فرم محفوظ است.");
+        }
         // Even after an uncertain HTTP result, an existing UUID remains immutable.
         Sql(db, "INSERT OR IGNORE INTO office_commands VALUES($id,$payload,'queued','')", ("$id", command.Uuid), ("$payload", Wire.Encode(command)));
     }

@@ -14,7 +14,9 @@ static class OfficeTests
         var file = office.AddFile(path,2097152); File.Delete(path);
         check(new OfficeStore(office.Path).File(file.Id).Bytes.Length>0,"Office attachment survives deletion of the original and app restart");
         var command = new OfficeCommand(Guid.NewGuid().ToString(),"topic.create",null,null,JsonSerializer.SerializeToElement(new { title="offline",body="saved locally" }),[file.Id]);
-        office.Save(command); office.Save(command with { Data=JsonSerializer.SerializeToElement(new {title="must not replace uncertain delivery"}) });
+        office.Save(command);
+        try { office.Save(command with { Data=JsonSerializer.SerializeToElement(new {title="must not replace uncertain delivery"}) }); throw new Exception("changed UUID payload accepted"); }
+        catch (InvalidDataException) { }
         check(office.Rows().Single().Command.Data.GetProperty("title").GetString()=="offline","Office command UUID is immutable and durable");
         var accepted=new HashSet<string>();int attempts=0,uploads=0;
         var meta=Metadata.Default with { User=new(7,"employee"),Sales=false,Office=true };

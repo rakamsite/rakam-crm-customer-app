@@ -50,7 +50,8 @@ public sealed class OfficeSync(HttpClient http, OfficeStore office, SyncClient c
             }
             catch (SyncFailure failure) when (failure.Permanent)
             {
-                office.Error(row.Command.Uuid, failure.Message);
+                if (row.Command.Kind.EndsWith(".read", StringComparison.Ordinal)) office.Complete(row.Command.Uuid);
+                else office.Error(row.Command.Uuid, failure.Message);
             }
         }
         var sections = new Dictionary<string, List<JsonElement>>();
