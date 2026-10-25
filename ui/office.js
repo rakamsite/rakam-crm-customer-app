@@ -26,6 +26,10 @@ async function officeRead(kind, row, version, data = {}) {
 window.renderOffice = function () {
   if (!state) return;
   const settings = officeSettings();
+  for (const tab of document.querySelectorAll('[data-office-tab]')) {
+    tab.setAttribute('aria-pressed', String(tab.dataset.officeTab === officeTab));
+    tab.classList.toggle('primary',tab.dataset.officeTab === officeTab);
+  }
   $('office-new').textContent = officeTab === 'topics' ? 'درخواست جدید' : officeTab === 'reports' ? 'ثبت گزارش روزانه' : 'انتشار اطلاعیه';
   $('office-new').hidden = !state.metadata.office || (officeTab === 'announcements' && !settings.manager) || (officeTab === 'reports' && settings.manager);
   $('office-last-sync').textContent = state.office?.last_sync ? 'آخرین دریافت: ' + date(state.office.last_sync) + ' · هنگام قطعی، آخرین اطلاعات دریافت‌شده نمایش داده می‌شود.' : 'پس از اولین اتصال، درخواست‌ها و وظایف شما اینجا دریافت می‌شود.';
@@ -44,7 +48,7 @@ window.renderOffice = function () {
     $('office-queue').append(box);
   }
   const query = $('office-search').value.trim();
-  const items = officeRows(officeTab).filter(row => !query || [row.title, row.body, row.user_name, row.completed_work].filter(Boolean).join(' ').includes(query));
+  const items = officeRows(officeTab).filter(row => !query || [row.title, row.body, row.user_name, row.completed_work, ...(officeTab === 'topics' ? officeRows('entries').filter(x => x.topic_id === row.id).map(x => x.body) : [])].filter(Boolean).join(' ').includes(query));
   const list = items.slice().sort((a,b) => b.id-a.id).map(row => {
     const box = text('div', '', 'record'), main = text('div', '', 'record-main');
     main.append(text('strong', row.title || ('گزارش ' + row.user_name)), text('p', officeTab === 'topics' ? row.next_step : officeTab === 'reports' ? officeStatus[row.status] : row.is_read || row.created_by_user_id === state.metadata.user.id ? 'مطالعه شده' : 'خوانده‌نشده'));
@@ -204,3 +208,6 @@ $('office-new').addEventListener('click',()=>{
 $('office-close').addEventListener('click',()=>{saveOfficeDraft();$('office-dialog').close();officeEditing=null;});
 $('office-dialog').addEventListener('cancel',()=>{saveOfficeDraft();officeEditing=null;});
 window.addEventListener('beforeunload',saveOfficeDraft);
+
+// Metadata may arrive before this deferred script has loaded.
+if (state) window.renderOffice();

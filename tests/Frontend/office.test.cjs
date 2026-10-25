@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const html = fs.readFileSync('ui/index.html','utf8');
 const script = fs.readFileSync('ui/app.js','utf8') + '\n' + fs.readFileSync('ui/office.js','utf8');
 const wait = async fn => { for(let i=0;i<100;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}throw Error('Timed out'); };
-async function fixture(manager=false){
+async function fixture(manager=false,late=false){
  const {Window}=await import(require('node:url').pathToFileURL(require.resolve('happy-dom')).href);
  const window=new Window({url:'https://app.rakam.local/'});
  window.document.write(html.replace(/<script[^>]*><\/script>/g,''));
@@ -18,7 +18,11 @@ async function fixture(manager=false){
   queueMicrotask(()=>listener({data:{id:message.id,ok:true,result}}));
  }}};
  window.confirm=()=>true;
- window.eval(script);
+ if(late){
+  state.office.sections.topics.push({id:1,title:'درخواست دریافت‌شده',next_step:'منتظر پاسخ مدیریت'});
+  window.eval(fs.readFileSync('ui/app.js','utf8') + '\nsetTimeout(() => {\n' + fs.readFileSync('ui/office.js','utf8') + '\n}, 20);');
+  await wait(()=>window.document.getElementById('office-list').textContent.includes('درخواست دریافت‌شده'));
+ }else window.eval(script);
  await wait(()=>window.document.querySelector('[data-page=office]').hidden===false);
  return {window,state,calls,document:window.document};
 }
@@ -54,5 +58,13 @@ test('manager sees assignment controls while employee reports stay collapsed in 
  assert.equal(document.getElementById('office-new').hidden,true);
  document.querySelector('[data-office-tab=announcements]').click();
  assert.equal(document.getElementById('office-new').textContent,'انتشار اطلاعیه');
+ await window.happyDOM.abort();
+});
+
+
+test('cached office records render even when metadata arrives before the office script',async()=>{
+ const {window,document}=await fixture(false,true);
+ assert.ok(document.getElementById('office-list').textContent.includes('درخواست دریافت‌شده'));
+ assert.equal(document.querySelector('[data-office-tab=topics]').getAttribute('aria-pressed'),'true');
  await window.happyDOM.abort();
 });
