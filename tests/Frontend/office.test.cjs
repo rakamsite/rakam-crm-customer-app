@@ -5,7 +5,7 @@ const html = fs.readFileSync('ui/index.html','utf8');
 const script = fs.readFileSync('ui/app.js','utf8') + '\n' + fs.readFileSync('ui/office.js','utf8');
 const wait = async fn => { for(let i=0;i<100;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}throw Error('Timed out'); };
 async function fixture(manager=false){
- const {Window}=await import(require.resolve('happy-dom'));
+ const {Window}=await import(require('node:url').pathToFileURL(require.resolve('happy-dom')).href);
  const window=new Window({url:'https://app.rakam.local/'});
  window.document.write(html.replace(/<script[^>]*><\/script>/g,''));
  const state={metadata:{user:{id:7,name:'کارمند آزمایشی'},sources:{unknown:'نامشخص'},channels:{in_person:'حضوری'},purposes:{vehicle:'خودرو'},fields:[],sales:false,office:true},visits:[],contacts:[],configured:true,server:'https://crm.test',sync_message:'قطع ارتباط؛ ثبت محلی ادامه دارد',data_folder:'test',office:{sections:{settings:[{id:1,user_id:7,manager,users:[{id:7,name:'کارمند'}]}],topics:[],entries:[],reports:[],announcements:[]},queue:[],last_sync:null}};
