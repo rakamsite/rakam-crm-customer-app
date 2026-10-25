@@ -4,11 +4,14 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <AssemblyName>Rakam.CustomerApp</AssemblyName>
+    <AssemblyName>Rakam CRM</AssemblyName>
+    <RootNamespace>Rakam.CustomerApp.Windows</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/rakam.ico</ApplicationIcon>
-    <Version>0.2.1</Version>
-    <Product>ثبت مراجعان راکام</Product>
+    <Version>0.2.2</Version>
+    <Product>Rakam CRM</Product>
+    <Title>Rakam CRM</Title>
+    <Description>Rakam CRM</Description>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets/rakam.ico" LogicalName="Rakam.CustomerApp.rakam.ico" />

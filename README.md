@@ -1,20 +1,20 @@
-# ثبت مراجعان راکام — نسخه ویندوز
+# Rakam CRM — نسخه ویندوز
 
 برنامه فارسی و آفلاین برای ثبت مراجعه حضوری/تلفنی، منبع آشنایی و درخواست مشتری؛ با ذخیره SQLite روی کامپیوتر و ارسال خودکار به CRM راکام.
 
 ## دریافت و اجرا
 
 1. در [Actions → Build Windows app](https://github.com/rakamsite/rakam-crm-customer-app/actions/workflows/windows.yml)، آخرین اجرای **سبز** را باز کنید.
-2. از بخش Artifacts، بسته **Rakam-Customer-App-Setup-Windows-x64** را دانلود و ZIP آن را باز کنید؛ داخل آن فقط **Rakam-Customer-App-Setup.exe** است.
+2. از بخش Artifacts، بسته **Rakam-CRM-Setup-Windows-x64** را دانلود و ZIP آن را باز کنید؛ داخل آن فقط **Rakam CRM Setup.exe** است.
 3. فایل Setup را اجرا کنید. نصب برای همین حساب ویندوز انجام می‌شود و دسترسی Administrator لازم ندارد.
-4. پس از نصب، برنامه را از آیکن **ثبت مراجعان راکام** روی دسکتاپ یا منوی Start باز کنید. فایل‌های داخلی در مسیر نصب نگهداری می‌شوند.
+4. پس از نصب، برنامه را از آیکن **Rakam CRM** روی دسکتاپ یا منوی Start باز کنید. فایل‌های داخلی در مسیر نصب نگهداری می‌شوند.
 5. Windows 10/11 نسخه x64 و **Microsoft Edge WebView2 Runtime** لازم است. اگر موجود نبود، از [صفحه رسمی دانلود WebView2](https://developer.microsoft.com/microsoft-edge/webview2/#download) نصب کنید. نصب جداگانه .NET لازم نیست.
 
 فونت **وزیر ۳۰.۱.۰** داخل برنامه همراه مجوز OFL قرار دارد؛ به اینترنت یا نصب فونت در ویندوز وابسته نیست.
 
 به‌روزرسانی با اجرای نصاب جدید روی همان حساب و همان مسیر نصب انجام می‌شود. دیتابیس، صف ارسال، اتصال و پشتیبان‌ها در مسیر مستقل `%LOCALAPPDATA%\Rakam\CustomerApp` باقی می‌مانند؛ حذف برنامه هم این اطلاعات را حذف نمی‌کند. نسخه قبلی را پیش از نصب ببندید و نسخه جدید را با همان حساب ویندوز اجرا کنید.
 
-برای استفاده پرتابل، بسته **Rakam-Customer-App-Windows-x64** همچنان موجود است؛ در این حالت همه فایل‌های پوشه باید کنار هم بمانند.
+برای استفاده پرتابل، بسته **Rakam-CRM-Windows-x64** همچنان موجود است؛ در این حالت همه فایل‌های پوشه باید کنار هم بمانند.
 
 این نسخه امضای تجاری ندارد و ممکن است Windows SmartScreen نام ناشر را ناشناخته نشان دهد. فقط بسته ساخته‌شده از همین مخزن و اجرای موفق را استفاده کنید.
 
@@ -68,7 +68,7 @@
 ```powershell
 dotnet run --project tests/Rakam.CustomerApp.Tests -c Release
 dotnet build src/Rakam.CustomerApp.Windows -c Release
-dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -o dist/Rakam-Customer-App
+dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -o dist/Rakam-CRM
 ```
 
 قرارداد سرور: `docs/CUSTOMER-APP-SYNC.md` در ریپو CRM. کلید، دیتابیس مشتری و پشتیبان را وارد Git نکنید.
@@ -88,3 +88,8 @@ dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contai
 ## نسخه ۰.۲.۱ — آیکن رسمی راکام
 
 فایل SVG ارسالی مالک با شکل و رنگ اصلی در رابط استفاده می‌شود؛ آیکن چنداندازه و شفاف ICO از همان فایل برای EXE، پنجره و نوار وظیفه، میان‌بر دسکتاپ/Start، نصب و فهرست حذف برنامه ساخته شده است. نسخه جدید را روی همان مسیر قبلی نصب کنید؛ اطلاعات و اتصال تغییری نمی‌کنند. این تغییر به انتشار دوباره سرور و migration نیاز ندارد.
+
+
+## نسخه ۰.۲.۲ — نام یکسان Rakam CRM
+
+نام پنجره، رابط، پیام‌های برنامه، مشخصات فایل اجرایی، نصاب، میان‌برها و فهرست برنامه‌های ویندوز Rakam CRM است. فایل اجرا Rakam CRM.exe و نصاب Rakam CRM Setup.exe است. شناسه نصب، مسیر نصب و مسیر داده قبلی عمداً ثابت‌اند تا نسخه جدید همان نصب را ارتقا دهد و اطلاعات، اتصال و پشتیبان حفظ شوند. میان‌برها و فایل‌های اجرایی قدیمی هنگام ارتقا جایگزین می‌شوند. تغییر سرور و migration لازم نیست.

@@ -31,7 +31,7 @@ public sealed class MainWindow : Form
         ShowIcon = true;
         ShowInTaskbar = true;
         FormClosed += (_, _) => Icon?.Dispose();
-        Text = "راکام | مراجعان و اتوماسیون داخلی"; Width = 1220; Height = 850; MinimumSize = new Size(850, 650);
+        Text = "Rakam CRM"; Width = 1220; Height = 850; MinimumSize = new Size(850, 650);
         StartPosition = FormStartPosition.CenterScreen; BackColor = Color.FromArgb(243, 246, 249);
         store = new LocalStore(Path.Combine(folder, "customers.db")); sync = new SyncClient(http, store);
         office = new OfficeStore(Path.Combine(folder, "office.db")); officeSync = new OfficeSync(http, office, sync);
@@ -79,7 +79,7 @@ public sealed class MainWindow : Form
         }
         catch (WebView2RuntimeNotFoundException)
         {
-            MessageBox.Show("WebView2 Runtime روی ویندوز نصب نیست. فایل نصب آفلاین آن را از بخش دانلود مایکروسافت نصب کنید و برنامه را دوباره باز کنید.", "پیش‌نیاز راکام");
+            MessageBox.Show("WebView2 Runtime روی ویندوز نصب نیست. فایل نصب آفلاین آن را از بخش دانلود مایکروسافت نصب کنید و برنامه را دوباره باز کنید.", "Rakam CRM");
             Close();
         }
     }
@@ -203,7 +203,7 @@ public sealed class MainWindow : Form
                     using (var dialog = new OpenFileDialog { Filter = "Rakam backup (*.zip;*.db)|*.zip;*.db" })
                     {
                         if (dialog.ShowDialog(this) != DialogResult.OK) break;
-                        if (MessageBox.Show("اطلاعات فعلی با پشتیبان جایگزین شود؟ ابتدا نسخه ایمنی خودکار ذخیره می‌شود.", "بازیابی پشتیبان", MessageBoxButtons.YesNo) != DialogResult.Yes) break;
+                        if (MessageBox.Show("اطلاعات فعلی با پشتیبان جایگزین شود؟ ابتدا نسخه ایمنی خودکار ذخیره می‌شود.", "Rakam CRM", MessageBoxButtons.YesNo) != DialogResult.Yes) break;
                         DesktopBackup.Save(store, office, Path.Combine(folder, "before-restore"));
                         DesktopBackup.Restore(dialog.FileName, store, office); result = State(); Publish();
                     }

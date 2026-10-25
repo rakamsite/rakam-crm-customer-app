@@ -25,19 +25,19 @@ jobs:
       - name: Offline storage and synchronization tests
         run: dotnet run --project tests/Rakam.CustomerApp.Tests -c Release
       - name: Publish Windows x64 (self contained)
-        run: dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o dist/Rakam-Customer-App
+        run: dotnet publish src/Rakam.CustomerApp.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o dist/Rakam-CRM
       - name: Include guide
-        run: Copy-Item README.md dist/Rakam-Customer-App/README.md
+        run: Copy-Item README.md dist/Rakam-CRM/README.md
       - name: Verify offline fonts and build installer
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           foreach ($font in @('Vazir-Regular.woff2', 'Vazir-Bold.woff2', 'OFL.txt')) {
-            if (-not (Test-Path "dist/Rakam-Customer-App/ui/fonts/$font")) { throw "Missing bundled font: $font" }
+            if (-not (Test-Path "dist/Rakam-CRM/ui/fonts/$font")) { throw "Missing bundled font: $font" }
           }
-          if (-not (Test-Path 'dist/Rakam-Customer-App/ui/assets/rakam.svg')) { throw 'Bundled Rakam logo missing' }
+          if (-not (Test-Path 'dist/Rakam-CRM/ui/assets/rakam.svg')) { throw 'Bundled Rakam logo missing' }
           Add-Type -AssemblyName System.Drawing
-          $icon = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path 'dist/Rakam-Customer-App/Rakam.CustomerApp.exe'))
+          $icon = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path 'dist/Rakam-CRM/Rakam CRM.exe'))
           if ($null -eq $icon) { throw 'Executable icon missing' }
           $bitmap = $icon.ToBitmap()
           $goldPixels = 0
@@ -60,29 +60,32 @@ jobs:
           New-Item -ItemType Directory -Force $data | Out-Null
           $marker = Join-Path $data 'installer-preservation-check.txt'
           Set-Content $marker 'keep-local-data'
-          $setup = Start-Process dist/installer/Rakam-Customer-App-Setup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LOG=dist/install.log' -Wait -PassThru
+          $legacyDesktop = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')
+          Set-Content -LiteralPath $legacyDesktop 'legacy shortcut marker'
+          $setup = Start-Process 'dist/installer/Rakam CRM Setup.exe' -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LOG=dist/install.log' -Wait -PassThru
           if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
+          if (Test-Path -LiteralPath $legacyDesktop) { throw 'Legacy shortcut was not replaced during upgrade' }
           $app = Join-Path $env:LOCALAPPDATA 'Programs/Rakam/CustomerApp'
-          if (-not (Test-Path "$app/Rakam.CustomerApp.exe")) { throw 'Installed executable missing' }
-          if (-not (Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')))) { throw 'Desktop shortcut missing' }
-          $shortcutPath = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')
+          if (-not (Test-Path "$app/Rakam CRM.exe")) { throw 'Installed executable missing' }
+          if (-not (Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'Rakam CRM.lnk')))) { throw 'Desktop shortcut missing' }
+          $shortcutPath = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'Rakam CRM.lnk')
           $shortcutBytes = [IO.File]::ReadAllBytes($shortcutPath)
           if ($shortcutBytes.Length -lt 76 -or [BitConverter]::ToUInt32($shortcutBytes, 0) -ne 76) { throw 'Invalid Windows Shell Link header' }
           $shortcutText = [Text.Encoding]::Unicode.GetString($shortcutBytes) + [Text.Encoding]::UTF8.GetString($shortcutBytes)
-          if (-not $shortcutText.Contains('Rakam.CustomerApp.exe')) { throw 'Desktop shortcut does not reference the branded executable' }
+          if (-not $shortcutText.Contains('Rakam CRM.exe')) { throw 'Desktop shortcut does not reference the branded executable' }
           $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
           if ((Get-Content $marker) -ne 'keep-local-data') { throw 'Local data was changed or deleted' }
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: Rakam-Customer-App-Setup-Windows-x64
-          path: dist/installer/Rakam-Customer-App-Setup.exe
+          name: Rakam-CRM-Setup-Windows-x64
+          path: 'dist/installer/Rakam CRM Setup.exe'
           retention-days: 30
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
-          name: Rakam-Customer-App-Windows-x64
-          path: dist/Rakam-Customer-App/
+          name: Rakam-CRM-Windows-x64
+          path: dist/Rakam-CRM/
           retention-days: 30
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>ثبت مراجعان | راکام</title>
+  <title>Rakam CRM</title>
   <link rel="icon" type="image/svg+xml" href="assets/rakam.svg">
   <link rel="stylesheet" href="app.css">
   <script defer src="app.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 <aside class="sidebar">
-  <div class="brand"><div class="brand-mark"><img src="assets/rakam.svg" alt="نشان راکام" width="36" height="36"></div><div><b>راکام</b><small>میز کار راکام</small></div></div>
+  <div class="brand"><div class="brand-mark"><img src="assets/rakam.svg" alt="Rakam CRM" width="36" height="36"></div><div><b dir="ltr">Rakam CRM</b><small>میز کار شما</small></div></div>
   <div class="workspace"><span class="eyebrow">فضای کاری</span><strong>نمایندگی صفایی</strong><span>ثبت مراجعه، بدون وقفه</span></div>
   <nav aria-label="بخش‌های برنامه">
     <button class="nav active" data-page="register"><span>＋</span>ثبت مراجعه</button>
@@ -21,7 +21,7 @@
     <button class="nav" data-page="office" hidden><span>▤</span>اتوماسیون داخلی</button>
     <button class="nav" data-page="settings"><span>⚙</span>اتصال و پشتیبان</button>
   </nav>
-  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>مراجعان و اتوماسیون · ۰.۲</small></div></div>
+  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>Rakam CRM · ۰.۲.۲</small></div></div>
 </aside>
 <main>
   <header>
@@ -86,7 +86,7 @@
   </section>
   <section id="settings" class="page" hidden>
     <div class="settings-grid">
-      <form class="card" id="connection-form"><span class="eyebrow">اتصال امن</span><h2>برنامه را به راکام وصل کنید</h2><p class="muted">در CRM وارد «تنظیمات ← ثبت مراجعان و برنامه ویندوز» شوید و برای این دستگاه کلید بسازید.</p>
+      <form class="card" id="connection-form"><span class="eyebrow">اتصال امن</span><h2>Rakam CRM را متصل کنید</h2><p class="muted">در CRM وارد «تنظیمات ← ثبت مراجعان و برنامه ویندوز» شوید و برای این دستگاه کلید بسازید.</p>
         <label>آدرس CRM<input id="server-url" type="url" dir="ltr" required placeholder="https://crm.safaeico.com"></label>
         <label>کلید اتصال<input id="connection-token" type="password" dir="ltr" required autocomplete="off" minlength="64" maxlength="64" placeholder="کلید اختصاصی این دستگاه"></label>
         <button class="btn primary" type="submit" id="pair-button">بررسی و ذخیره اتصال</button><p id="connection-state" class="hint"></p>
@@ -99,7 +99,7 @@
       </div>
     </div>
   </section>
-  <footer>راکام <span>•</span> ارتباط منظم، پیگیری مطمئن <span class="footer-local">ذخیره محلی فعال است</span></footer>
+  <footer><span dir="ltr">Rakam CRM</span> <span>•</span> ارتباط منظم، پیگیری مطمئن <span class="footer-local">ذخیره محلی فعال است</span></footer>
 </main>
 <dialog id="office-dialog" class="office-dialog"><div class="office-dialog-bar"><h2 id="office-dialog-title"></h2><button type="button" class="btn subtle" id="office-close">بستن</button></div><div id="office-content"></div></dialog>
 <div id="toast" class="toast" role="status" hidden></div>
