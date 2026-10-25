@@ -196,13 +196,15 @@ function officeRetry(row){
 }
 for(const button of document.querySelectorAll('[data-office-tab]'))button.addEventListener('click',()=>{officeTab=button.dataset.officeTab;window.renderOffice();});
 $('office-search').addEventListener('input',()=>window.renderOffice());
-$('office-new').addEventListener('click',()=>{
+$('office-new').addEventListener('click',async()=>{
   try{const saved=JSON.parse(localStorage.getItem(officeDraftKey()));if(saved&&confirm('پیش‌نویس قبلی باز شود؟')){
     const section=saved.kind.startsWith('topic.')?'topics':saved.kind.startsWith('report.')?'reports':'announcements';
     const row=officeRows(section).find(x=>x.id===saved.target_id);
     if(saved.target_id&&!row){toast('پیش‌نویس محفوظ است؛ ابتدا همگام‌سازی کنید.',true);return;}
     officeForm(saved.kind,row,saved.values,saved.files,saved.failed,saved.uuid);return;
-  }}catch{}
+  }
+  if(saved)for(const file of saved.files || [])await call('office.remove',{id:file.id});
+  }catch{}
   officeForm(officeTab==='topics'?'topic.create':officeTab==='reports'?'report.save':'notice.create');
 });
 $('office-close').addEventListener('click',()=>{saveOfficeDraft();$('office-dialog').close();officeEditing=null;});
