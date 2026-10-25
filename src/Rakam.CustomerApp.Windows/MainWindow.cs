@@ -14,8 +14,10 @@ public sealed class MainWindow : Form
     private readonly string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Rakam", "CustomerApp");
     private readonly LocalStore store;
     private readonly WebView2 web = new() { Dock = DockStyle.Fill };
-    private readonly HttpClient http = new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
+    private readonly HttpClient http = new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(90) };
     private readonly SyncClient sync;
+    private readonly OfficeStore office;
+    private readonly OfficeSync officeSync;
     private readonly System.Windows.Forms.Timer timer = new() { Interval = 60000 };
     private bool syncing;
     private string syncMessage = "اطلاعات روی این دستگاه ذخیره می‌شود";
@@ -23,9 +25,10 @@ public sealed class MainWindow : Form
 
     public MainWindow()
     {
-        Text = "ثبت مراجعان | راکام"; Width = 1220; Height = 850; MinimumSize = new Size(850, 650);
+        Text = "راکام | مراجعان و اتوماسیون داخلی"; Width = 1220; Height = 850; MinimumSize = new Size(850, 650);
         StartPosition = FormStartPosition.CenterScreen; BackColor = Color.FromArgb(243, 246, 249);
         store = new LocalStore(Path.Combine(folder, "customers.db")); sync = new SyncClient(http, store);
+        office = new OfficeStore(Path.Combine(folder, "office.db")); officeSync = new OfficeSync(http, office, sync);
         DailyBackup();
         Controls.Add(web);
         Load += async (_, _) => await Initialize();
@@ -38,9 +41,9 @@ public sealed class MainWindow : Form
         {
             var backupFolder = Path.Combine(folder, "backups");
             if (store.Setting("backup_day") == DateTime.Today.ToString("yyyy-MM-dd")) return;
-            store.Backup(backupFolder);
+            DesktopBackup.Save(store, office, backupFolder);
             store.Set("backup_day", DateTime.Today.ToString("yyyy-MM-dd"));
-            foreach (var old in new DirectoryInfo(backupFolder).GetFiles("*.db").OrderByDescending(x => x.LastWriteTimeUtc).Skip(14)) old.Delete();
+            foreach (var old in new DirectoryInfo(backupFolder).GetFiles("*.zip").OrderByDescending(x => x.LastWriteTimeUtc).Skip(14)) old.Delete();
         }
         catch (IOException) { syncMessage = "پشتیبان خودکار ساخته نشد؛ مسیر ذخیره را بررسی کنید."; }
     }
@@ -76,7 +79,7 @@ public sealed class MainWindow : Form
     }
     private object State() => new
     {
-        metadata = store.Metadata, contacts = store.Contacts(), visits = store.Visits(),
+        office = office.State(), metadata = store.Metadata, contacts = store.Contacts(), visits = store.Visits(),
         server = store.Setting("server") ?? "https://crm.safaeico.com",
         configured = File.Exists(Path.Combine(folder, "connection.bin")),
         last_sync = store.Setting("last_sync"), syncing, sync_message = syncMessage,
@@ -102,10 +105,12 @@ public sealed class MainWindow : Form
             var token = Token(); var server = store.Setting("server");
             if (token is null || server is null) { syncMessage = "ثبت آفلاین فعال است؛ اتصال CRM را در تنظیمات وارد کنید."; return; }
             syncMessage = "در حال همگام‌سازی…"; Publish();
+            var metadata = await sync.Pair(server, token, shutdown.Token);
+            await officeSync.Run(server, token, metadata, shutdown.Token);
             await sync.Run(server, token, shutdown.Token);
-            syncMessage = store.Visits().Any(x => x.State == "error") ? "برخی ثبت‌ها نیاز به بررسی دارند" : "آخرین تغییرات همگام شد";
+            syncMessage = store.Visits().Any(x => x.State == "error") || office.Rows().Any(x => x.State == "error") ? "برخی ثبت‌ها نیاز به بررسی دارند" : "آخرین تغییرات همگام شد";
         }
-        catch (SyncFailure e) { syncMessage = e.Message; }
+        catch (SyncFailure e) { if (e.Status is 401 or 403) office.ClearCache(); syncMessage = e.Message; }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
         { syncMessage = "ارتباط برقرار نیست؛ ثبت محلی ادامه دارد."; }
         catch (CryptographicException) { syncMessage = "کلید اتصال نیاز به ثبت مجدد دارد."; }
@@ -127,6 +132,37 @@ public sealed class MainWindow : Form
             switch (action)
             {
                 case "init": result = State(); break;
+                case "office.save":
+                    if (!store.Metadata.Office) throw new InvalidOperationException("ابتدا اتصال اتوماسیون را بررسی کنید.");
+                    office.Bind((store.Setting("server") ?? "") + "|" + store.Metadata.User.Id);
+                    var command = Wire.Decode<OfficeCommand>(payload.GetRawText());
+                    office.Save(command); result = State(); Publish(); _ = Synchronize(); break;
+                case "office.pick":
+                    using (var files = new OpenFileDialog { Multiselect = true, Filter = "فایل‌های مجاز|*.pdf;*.jpg;*.jpeg;*.png;*.webp;*.txt;*.docx;*.xlsx" })
+                    {
+                        var selected = new List<OfficeFile>();
+                        var settings = office.State().Sections["settings"].FirstOrDefault();
+                        var maximum = settings.ValueKind == JsonValueKind.Object ? settings.GetProperty("max_upload_bytes").GetInt64() : 2097152;
+                        if (files.ShowDialog(this) == DialogResult.OK)
+                        {
+                            try { foreach (var file in files.FileNames) selected.Add(office.AddFile(file, maximum)); }
+                            catch { foreach (var file in selected) office.RemoveFile(file.Id); throw; }
+                        }
+                        result = selected;
+                    }
+                    break;
+                case "office.remove": office.RemoveFile(payload.GetProperty("id").GetString()!); break;
+                case "office.dismiss": office.Dismiss(payload.GetProperty("uuid").GetString()!); result = State(); break;
+                case "office.download":
+                    var attachmentId = payload.GetProperty("id").GetInt64();
+                    var attachmentName = payload.GetProperty("name").GetString() ?? "پیوست";
+                    var downloadToken = Token() ?? throw new InvalidOperationException("اتصال برنامه ثبت نشده است.");
+                    using (var destination = new SaveFileDialog { FileName = Path.GetFileName(attachmentName) })
+                    {
+                        if (destination.ShowDialog(this) == DialogResult.OK)
+                            await officeSync.Download(store.Setting("server")!, downloadToken, attachmentId, destination.FileName, shutdown.Token);
+                    }
+                    result = "فایل دریافت شد."; break;
                 case "save":
                     var visit = Wire.Decode<Visit>(payload.GetRawText());
                     var followDate = payload.TryGetProperty("follow_up_date", out var dateValue) ? dateValue.GetString() : null;
@@ -154,21 +190,16 @@ public sealed class MainWindow : Form
                     break;
                 case "backup":
                     using (var dialog = new FolderBrowserDialog { Description = "پوشه نگهداری پشتیبان را انتخاب کنید" })
-                    { if (dialog.ShowDialog(this) == DialogResult.OK) { store.Backup(dialog.SelectedPath); result = "پشتیبان ذخیره شد."; } }
+                    { if (dialog.ShowDialog(this) == DialogResult.OK) { DesktopBackup.Save(store, office, dialog.SelectedPath); result = "پشتیبان ذخیره شد."; } }
                     break;
                 case "restore":
                     if (syncing) throw new InvalidOperationException("پس از پایان همگام‌سازی دوباره تلاش کنید.");
-                    using (var dialog = new OpenFileDialog { Filter = "Rakam backup (*.db)|*.db" })
+                    using (var dialog = new OpenFileDialog { Filter = "Rakam backup (*.zip;*.db)|*.zip;*.db" })
                     {
                         if (dialog.ShowDialog(this) != DialogResult.OK) break;
-                        LocalStore.ValidateBackup(dialog.FileName);
-                        var backupStore = new LocalStore(dialog.FileName);
-                        var oldBinding = store.Setting("binding"); var incomingBinding = backupStore.Setting("binding");
-                        if (oldBinding != incomingBinding && (oldBinding is not null || File.Exists(Path.Combine(folder, "connection.bin"))))
-                            throw new InvalidDataException("این پشتیبان متعلق به اتصال فعلی نیست.");
                         if (MessageBox.Show("اطلاعات فعلی با پشتیبان جایگزین شود؟ ابتدا نسخه ایمنی خودکار ذخیره می‌شود.", "بازیابی پشتیبان", MessageBoxButtons.YesNo) != DialogResult.Yes) break;
-                        store.Backup(Path.Combine(folder, "before-restore"));
-                        LocalStore.Restore(dialog.FileName, store.Path); result = State(); Publish();
+                        DesktopBackup.Save(store, office, Path.Combine(folder, "before-restore"));
+                        DesktopBackup.Restore(dialog.FileName, store, office); result = State(); Publish();
                     }
                     break;
                 default: throw new InvalidOperationException("عملیات معتبر نیست.");
@@ -184,3 +215,4 @@ public sealed class MainWindow : Form
         }
     }
 }
+

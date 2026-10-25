@@ -1,4 +1,4 @@
-#define AppVersion "0.1.1"
+#define AppVersion "0.2.0"
 #define AppExe "Rakam.CustomerApp.exe"
 
 [Setup]
@@ -34,3 +34,4 @@ Name: "{userprograms}\ثبت مراجعان راکام"; Filename: "{app}\{#AppE
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Launch Rakam Customer App"; Flags: nowait postinstall skipifsilent
+

@@ -4,9 +4,10 @@ using System.Text;
 
 namespace Rakam.CustomerApp.Core;
 
-public sealed class SyncFailure(string message, bool permanent = false) : Exception(message)
+public sealed class SyncFailure(string message, bool permanent = false, int status = 0) : Exception(message)
 {
     public bool Permanent { get; } = permanent;
+    public int Status { get; } = status;
 }
 
 public sealed class SyncClient(HttpClient http, LocalStore store)
@@ -20,7 +21,7 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
             throw new InvalidDataException("آدرس ریشه CRM را با https وارد کنید؛ مثلاً https://crm.safaeico.com");
         return uri.GetLeftPart(UriPartial.Authority);
     }
-    private async Task<T> Request<T>(string server, string token, string path, object? body, CancellationToken cancel)
+    internal async Task<T> Request<T>(string server, string token, string path, object? body, CancellationToken cancel)
     {
         using var request = new HttpRequestMessage(body is null ? HttpMethod.Get : HttpMethod.Post,
             server + "/api/customer-app/v1/" + path);
@@ -31,8 +32,8 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
         if (!response.IsSuccessStatusCode)
         {
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-                throw new SyncFailure("کلید اتصال منقضی، لغو یا فاقد دسترسی است؛ اتصال را در تنظیمات بررسی کنید.");
-            if (response.StatusCode is HttpStatusCode.UnprocessableEntity or HttpStatusCode.Conflict)
+                throw new SyncFailure("اتصال این دستگاه لغو شده یا دسترسی حساب تغییر کرده است؛ با مسئول سامانه تماس بگیرید.", false, (int)response.StatusCode);
+            if (response.StatusCode is HttpStatusCode.UnprocessableEntity or HttpStatusCode.Conflict or HttpStatusCode.NotFound)
             {
                 var text = await response.Content.ReadAsStringAsync(cancel);
                 string message = "اطلاعات نیاز به اصلاح دارد؛ در CRM بررسی کنید.";
@@ -44,7 +45,7 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
                     else if (json.RootElement.TryGetProperty("message", out var m)) message = m.GetString() ?? message;
                 }
                 catch (System.Text.Json.JsonException) { }
-                throw new SyncFailure(message, true);
+                throw new SyncFailure(message, true, (int)response.StatusCode);
             }
             throw new SyncFailure($"CRM در دسترس نیست (کد {(int)response.StatusCode})؛ ثبت محلی ادامه دارد.");
         }
@@ -68,7 +69,8 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
         if (!await gate.WaitAsync(0, cancel)) return;
         try
         {
-            await Pair(server, token, cancel);
+            var meta = await Pair(server, token, cancel);
+            if (!meta.Sales) { store.ReplaceContacts([]); return; }
             foreach (var row in store.Visits().Where(x => x.State == "queued"))
             {
                 var sent = Wire.Encode(row.Visit);
@@ -96,3 +98,4 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
         finally { gate.Release(); }
     }
 }
+

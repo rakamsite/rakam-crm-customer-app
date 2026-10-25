@@ -6,7 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Rakam.CustomerApp</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <Product>ثبت مراجعان راکام</Product>
   </PropertyGroup>
   <ItemGroup>
@@ -18,3 +18,4 @@
     <ItemGroup><Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" /></ItemGroup>
   </Target>
 </Project>
+

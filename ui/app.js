@@ -32,7 +32,7 @@ $('toast').addEventListener('click', () => $('toast').hidden = true);
 function page(id) {
   document.querySelectorAll('.page').forEach(node => node.hidden = node.id !== id);
   document.querySelectorAll('.nav').forEach(node => node.classList.toggle('active', node.dataset.page === id));
-  $('page-title').textContent = { register: 'ثبت مراجعه جدید', history: 'سوابق مراجعان', contacts: 'مخاطبان CRM', settings: 'اتصال و پشتیبان' }[id];
+  $('page-title').textContent = { register: 'ثبت مراجعه جدید', history: 'سوابق مراجعان', contacts: 'مخاطبان CRM', office: 'اتوماسیون داخلی', settings: 'اتصال و پشتیبان' }[id];
 }
 document.querySelectorAll('.nav').forEach(node => node.addEventListener('click', () => page(node.dataset.page)));
 function options(select, values, selected) {
@@ -128,6 +128,7 @@ function render(next) {
     sourceOptions(state.metadata); dynamicFields(state.metadata); metaSignature = signature;
   }
   const counts = state.visits.reduce((result, row) => { result[row.state]++; return result; }, { queued: 0, synced: 0, error: 0 });
+  for (const row of state.office?.queue || []) { if (row.state === 'queued') counts.queued++; if (row.state === 'error') counts.error++; }
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
   $('stat-today').textContent = fa(state.visits.filter(x => new Date(x.visit.occurred_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' }) === today).length);
   $('stat-pending').textContent = fa(counts.queued);
@@ -141,9 +142,14 @@ function render(next) {
   $('connection-note').textContent = state.sync_message;
   $('sync-button').disabled = state.syncing;
   $('server-url').value = state.server;
-  $('connection-state').textContent = state.configured ? 'کلید اتصال ذخیره شده است؛ برای تعویض، کلید جدید وارد کنید.' : 'بدون اتصال هم می‌توانید مراجعه ثبت کنید.';
+  $('connection-state').textContent = state.configured ? 'اتصال ذخیره شده و محدودیت زمانی ندارد؛ ورود روزانه لازم نیست.' : 'بدون اتصال هم می‌توانید مراجعه ثبت کنید.';
   $('data-folder').textContent = state.data_folder;
   renderHistory(); renderContacts();
+  document.querySelector('[data-page="office"]').hidden = !state.metadata.office;
+  for (const id of ['register', 'history', 'contacts']) document.querySelector('[data-page="'+id+'"]').hidden = !state.metadata.sales;
+  if (!state.metadata.sales && document.querySelector('.nav.active')?.dataset.page !== 'settings') page(state.metadata.office ? 'office' : 'settings');
+  document.querySelector('.stats').hidden = !state.metadata.sales;
+  window.renderOffice?.();
 }
 const date = value => new Date(value).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran', dateStyle: 'medium', timeStyle: 'short' });
 function renderHistory() {
@@ -252,3 +258,4 @@ $('connection-form').addEventListener('submit', async event => {
 });
 $('today').textContent = new Date().toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 call('init').then(render).catch(error => toast(error.message, true));
+

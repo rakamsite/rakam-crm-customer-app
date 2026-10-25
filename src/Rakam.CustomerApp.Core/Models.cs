@@ -23,7 +23,7 @@ public record FieldOption(string Value, string Label);
 public record FieldDefinition(string Key, string Label, string Type, bool Required,
     List<FieldOption> Options, List<string> ContactTypes);
 public record Metadata(int Protocol, UserInfo User, Dictionary<string, string> Sources,
-    Dictionary<string, string> Channels, Dictionary<string, string> Purposes, List<FieldDefinition> Fields)
+    Dictionary<string, string> Channels, Dictionary<string, string> Purposes, List<FieldDefinition> Fields, bool Sales = true, bool Office = false)
 {
     public static Metadata Default => new(1, new(0, "ثبت آفلاین"),
         new() { ["instagram"] = "اینستاگرام", ["google"] = "گوگل", ["referral"] = "معرفی دیگران",
@@ -100,3 +100,4 @@ public static partial class Validation
         { throw new InvalidDataException("تاریخ شمسی معتبر نیست."); }
     }
 }
+

@@ -7,18 +7,20 @@
   <title>ثبت مراجعان | راکام</title>
   <link rel="stylesheet" href="app.css">
   <script defer src="app.js"></script>
+  <script defer src="office.js"></script>
 </head>
 <body>
 <aside class="sidebar">
-  <div class="brand"><div class="brand-mark">ر</div><div><b>راکام</b><small>میز ارتباط با مشتری</small></div></div>
+  <div class="brand"><div class="brand-mark">ر</div><div><b>راکام</b><small>میز کار راکام</small></div></div>
   <div class="workspace"><span class="eyebrow">فضای کاری</span><strong>نمایندگی صفایی</strong><span>ثبت مراجعه، بدون وقفه</span></div>
   <nav aria-label="بخش‌های برنامه">
     <button class="nav active" data-page="register"><span>＋</span>ثبت مراجعه</button>
     <button class="nav" data-page="history"><span>≡</span>سوابق مراجعان <i id="history-count">۰</i></button>
     <button class="nav" data-page="contacts"><span>◎</span>مخاطبان CRM</button>
+    <button class="nav" data-page="office" hidden><span>▤</span>اتوماسیون داخلی</button>
     <button class="nav" data-page="settings"><span>⚙</span>اتصال و پشتیبان</button>
   </nav>
-  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>برنامه ثبت مراجعان · ۰.۱</small></div></div>
+  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>مراجعان و اتوماسیون · ۰.۲</small></div></div>
 </aside>
 <main>
   <header>
@@ -73,6 +75,14 @@
   <section id="contacts" class="page" hidden>
     <div class="card"><h2>مخاطبان دریافت‌شده از CRM</h2><p class="muted">فقط مخاطبان در دسترس حساب متصل؛ نسخه محلی با اتصال به‌روز می‌شود.</p><input id="contact-search" placeholder="جست‌وجوی نام یا موبایل…" aria-label="جست‌وجوی مخاطبان"><div id="contacts-list"></div></div>
   </section>
+  <section id="office" class="page" hidden>
+    <div class="office-bar"><div class="office-tabs" aria-label="بخش اتوماسیون">
+      <button class="btn" data-office-tab="topics">درخواست‌ها و وظایف</button><button class="btn" data-office-tab="reports">گزارش روزانه</button><button class="btn" data-office-tab="announcements">اطلاعیه‌ها</button>
+    </div><button class="btn primary" id="office-new">درخواست جدید</button></div>
+    <p id="office-last-sync" class="hint"></p>
+    <div id="office-queue" class="card" hidden></div>
+    <div class="card"><input id="office-search" placeholder="جست‌وجو در عنوان و متن…" aria-label="جست‌وجوی اتوماسیون"><div id="office-list"></div></div>
+  </section>
   <section id="settings" class="page" hidden>
     <div class="settings-grid">
       <form class="card" id="connection-form"><span class="eyebrow">اتصال امن</span><h2>برنامه را به راکام وصل کنید</h2><p class="muted">در CRM وارد «تنظیمات ← ثبت مراجعان و برنامه ویندوز» شوید و برای این دستگاه کلید بسازید.</p>
@@ -90,7 +100,9 @@
   </section>
   <footer>راکام <span>•</span> ارتباط منظم، پیگیری مطمئن <span class="footer-local">ذخیره محلی فعال است</span></footer>
 </main>
+<dialog id="office-dialog" class="office-dialog"><div class="office-dialog-bar"><h2 id="office-dialog-title"></h2><button type="button" class="btn subtle" id="office-close">بستن</button></div><div id="office-content"></div></dialog>
 <div id="toast" class="toast" role="status" hidden></div>
 <dialog id="detail-dialog"><div id="detail-body"></div><button class="btn" id="close-detail">بستن</button></dialog>
 </body>
 </html>
+

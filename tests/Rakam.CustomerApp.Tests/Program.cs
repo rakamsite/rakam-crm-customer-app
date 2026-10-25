@@ -85,6 +85,7 @@ try
     var otherUser = new SyncClient(new HttpClient(new FakeHttp(_ => Json(Metadata.Default with { User = new(8, "other") }))), store);
     try { await otherUser.Pair("https://crm.example.com", token); throw new Exception("binding bypass"); }
     catch (SyncFailure) { Check(true, "cross-account binding refused"); }
+    await OfficeTests.Run(root, Check);
     Console.WriteLine($"All {passed} checks passed.");
 }
 finally { Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }
@@ -95,3 +96,4 @@ sealed class FakeHttp(Func<HttpRequestMessage, HttpResponseMessage> callback) : 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         => Task.FromResult(callback(request));
 }
+

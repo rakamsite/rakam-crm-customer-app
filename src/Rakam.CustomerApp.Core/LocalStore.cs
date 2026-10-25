@@ -114,12 +114,12 @@ public sealed class LocalStore
         Directory.CreateDirectory(directory);
         var path = System.IO.Path.Combine(directory, $"rakam-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..6]}.db");
         using var source = Open();
-        using var target = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path }.ToString());
+        using var target = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
         target.Open(); source.BackupDatabase(target); return path;
     }
     public static void ValidateBackup(string path)
     {
-        using var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly }.ToString());
+        using var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         db.Open(); using var cmd = db.CreateCommand();
         cmd.CommandText = "PRAGMA integrity_check";
         if ((string?)cmd.ExecuteScalar() != "ok") throw new InvalidDataException("پشتیبان سالم نیست.");
@@ -130,7 +130,7 @@ public sealed class LocalStore
     public static void Restore(string backup, string target)
     {
         ValidateBackup(backup);
-        using var source = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = backup, Mode = SqliteOpenMode.ReadOnly }.ToString());
+        using var source = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = backup, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = target }.ToString());
         source.Open(); destination.Open(); source.BackupDatabase(destination);
     }
@@ -156,3 +156,4 @@ public sealed class LocalStore
         return "\"" + value.Replace("\"", "\"\"") + "\"";
     }
 }
+
