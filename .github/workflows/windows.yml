@@ -68,7 +68,11 @@ jobs:
           $shell = New-Object -ComObject WScript.Shell
           $shortcutPath = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')
           $shortcut = $shell.CreateShortcut($shortcutPath)
-          if ($shortcut.IconLocation -notlike '*Rakam.CustomerApp.exe,0') { throw 'Desktop shortcut icon is not the Rakam executable' }
+          $iconParts = $shortcut.IconLocation -split ',\s*'
+          $shortcutIcon = [Environment]::ExpandEnvironmentVariables($iconParts[0].Trim('"'))
+          if ($shortcutIcon -ne (Join-Path $app 'Rakam.CustomerApp.exe') -or $iconParts.Length -ne 2 -or [int]$iconParts[1] -ne 0) {
+            throw "Desktop shortcut icon is not the Rakam executable: $($shortcut.IconLocation)"
+          }
           $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
           if ((Get-Content $marker) -ne 'keep-local-data') { throw 'Local data was changed or deleted' }
