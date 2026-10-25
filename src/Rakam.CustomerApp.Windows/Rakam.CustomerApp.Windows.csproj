@@ -8,7 +8,7 @@
     <RootNamespace>Rakam.CustomerApp.Windows</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/rakam.ico</ApplicationIcon>
-    <Version>0.2.3</Version>
+    <Version>0.2.4</Version>
     <Product>Rakam CRM</Product>
     <Title>Rakam CRM</Title>
     <Description>Rakam CRM</Description>
