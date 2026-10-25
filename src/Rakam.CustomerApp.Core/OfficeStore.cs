@@ -57,7 +57,7 @@ public sealed class OfficeStore
         using var db = Open(); using var cmd = db.CreateCommand();
         cmd.CommandText = "SELECT COALESCE(SUM(length(bytes)),0) FROM office_files";
         if (Convert.ToInt64(cmd.ExecuteScalar()) + file.Length > 268435456) throw new InvalidDataException("فضای فایل‌های ارسال‌نشده پر شده است؛ ابتدا همگام‌سازی کنید.");
-        var id = Guid.NewGuid().ToString(); var bytes = File.ReadAllBytes(file.FullName);
+        var id = Guid.NewGuid().ToString(); var bytes = System.IO.File.ReadAllBytes(file.FullName);
         Sql(db, "INSERT INTO office_files VALUES($id,$name,$bytes,$key,NULL,$at)", ("$id", id), ("$name", file.Name), ("$bytes", bytes),
             ("$key", Guid.NewGuid().ToString()), ("$at", DateTimeOffset.UtcNow.ToString("O")));
         return new(id, file.Name, bytes.LongLength);

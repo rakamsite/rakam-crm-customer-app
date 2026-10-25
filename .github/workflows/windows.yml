@@ -15,6 +15,13 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify office interface and offline drafts
+        run: |
+          npm install --no-save --no-package-lock happy-dom@21.0.4
+          node --test tests/Frontend/*.test.cjs
       - name: Offline storage and synchronization tests
         run: dotnet run --project tests/Rakam.CustomerApp.Tests -c Release
       - name: Publish Windows x64 (self contained)
@@ -58,3 +65,4 @@ jobs:
           name: Rakam-Customer-App-Windows-x64
           path: dist/Rakam-Customer-App/
           retention-days: 30
+
