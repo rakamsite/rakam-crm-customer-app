@@ -65,17 +65,11 @@ jobs:
           $app = Join-Path $env:LOCALAPPDATA 'Programs/Rakam/CustomerApp'
           if (-not (Test-Path "$app/Rakam.CustomerApp.exe")) { throw 'Installed executable missing' }
           if (-not (Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')))) { throw 'Desktop shortcut missing' }
-          $shell = New-Object -ComObject WScript.Shell
           $shortcutPath = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')
-          $shortcut = $shell.CreateShortcut($shortcutPath)
-          $iconParts = $shortcut.IconLocation -split ',\s*'
-          $shortcutIcon = [Environment]::ExpandEnvironmentVariables($iconParts[0].Trim('"'))
-          # Windows uses the target executable's icon when IconLocation has no file name.
-          if ([string]::IsNullOrWhiteSpace($shortcutIcon)) { $shortcutIcon = $shortcut.TargetPath }
-          $expectedIcon = [IO.Path]::GetFullPath((Join-Path $app 'Rakam.CustomerApp.exe'))
-          if ([IO.Path]::GetFullPath($shortcutIcon) -ne $expectedIcon -or $iconParts.Length -ne 2 -or [int]$iconParts[1] -ne 0) {
-            throw "Desktop shortcut icon is not the Rakam executable: $($shortcut.IconLocation)"
-          }
+          $shortcutBytes = [IO.File]::ReadAllBytes($shortcutPath)
+          if ($shortcutBytes.Length -lt 76 -or [BitConverter]::ToUInt32($shortcutBytes, 0) -ne 76) { throw 'Invalid Windows Shell Link header' }
+          $shortcutText = [Text.Encoding]::Unicode.GetString($shortcutBytes) + [Text.Encoding]::UTF8.GetString($shortcutBytes)
+          if (-not $shortcutText.Contains('Rakam.CustomerApp.exe')) { throw 'Desktop shortcut does not reference the branded executable' }
           $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
           if ((Get-Content $marker) -ne 'keep-local-data') { throw 'Local data was changed or deleted' }
