@@ -70,7 +70,10 @@ jobs:
           $shortcut = $shell.CreateShortcut($shortcutPath)
           $iconParts = $shortcut.IconLocation -split ',\s*'
           $shortcutIcon = [Environment]::ExpandEnvironmentVariables($iconParts[0].Trim('"'))
-          if ($shortcutIcon -ne (Join-Path $app 'Rakam.CustomerApp.exe') -or $iconParts.Length -ne 2 -or [int]$iconParts[1] -ne 0) {
+          # Windows uses the target executable's icon when IconLocation has no file name.
+          if ([string]::IsNullOrWhiteSpace($shortcutIcon)) { $shortcutIcon = $shortcut.TargetPath }
+          $expectedIcon = [IO.Path]::GetFullPath((Join-Path $app 'Rakam.CustomerApp.exe'))
+          if ([IO.Path]::GetFullPath($shortcutIcon) -ne $expectedIcon -or $iconParts.Length -ne 2 -or [int]$iconParts[1] -ne 0) {
             throw "Desktop shortcut icon is not the Rakam executable: $($shortcut.IconLocation)"
           }
           $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
