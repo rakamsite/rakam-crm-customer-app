@@ -35,6 +35,21 @@ jobs:
           foreach ($font in @('Vazir-Regular.woff2', 'Vazir-Bold.woff2', 'OFL.txt')) {
             if (-not (Test-Path "dist/Rakam-Customer-App/ui/fonts/$font")) { throw "Missing bundled font: $font" }
           }
+          if (-not (Test-Path 'dist/Rakam-Customer-App/ui/assets/rakam.svg')) { throw 'Bundled Rakam logo missing' }
+          Add-Type -AssemblyName System.Drawing
+          $icon = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path 'dist/Rakam-Customer-App/Rakam.CustomerApp.exe'))
+          if ($null -eq $icon) { throw 'Executable icon missing' }
+          $bitmap = $icon.ToBitmap()
+          $goldPixels = 0
+          for ($x = 0; $x -lt $bitmap.Width; $x++) {
+            for ($y = 0; $y -lt $bitmap.Height; $y++) {
+              $pixel = $bitmap.GetPixel($x, $y)
+              if ($pixel.A -gt 200 -and $pixel.R -gt 230 -and $pixel.G -gt 140 -and $pixel.G -lt 195 -and $pixel.B -lt 60) { $goldPixels++ }
+            }
+          }
+          $bitmap.Dispose()
+          $icon.Dispose()
+          if ($goldPixels -eq 0) { throw 'Executable does not contain the supplied Rakam icon' }
           & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" installer/customer-app.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
       - name: Verify installation and removal preserve local data
@@ -50,6 +65,10 @@ jobs:
           $app = Join-Path $env:LOCALAPPDATA 'Programs/Rakam/CustomerApp'
           if (-not (Test-Path "$app/Rakam.CustomerApp.exe")) { throw 'Installed executable missing' }
           if (-not (Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')))) { throw 'Desktop shortcut missing' }
+          $shell = New-Object -ComObject WScript.Shell
+          $shortcutPath = [IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'ثبت مراجعان راکام.lnk')
+          $shortcut = $shell.CreateShortcut($shortcutPath)
+          if ($shortcut.IconLocation -notlike '*Rakam.CustomerApp.exe,0') { throw 'Desktop shortcut icon is not the Rakam executable' }
           $remove = Start-Process "$app/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
           if ((Get-Content $marker) -ne 'keep-local-data') { throw 'Local data was changed or deleted' }

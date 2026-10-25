@@ -25,6 +25,12 @@ public sealed class MainWindow : Form
 
     public MainWindow()
     {
+        using (var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("Rakam.CustomerApp.rakam.ico")
+            ?? throw new InvalidOperationException("Bundled Rakam icon is missing."))
+        using (var bundledIcon = new Icon(stream)) Icon = (Icon)bundledIcon.Clone();
+        ShowIcon = true;
+        ShowInTaskbar = true;
+        FormClosed += (_, _) => Icon?.Dispose();
         Text = "راکام | مراجعان و اتوماسیون داخلی"; Width = 1220; Height = 850; MinimumSize = new Size(850, 650);
         StartPosition = FormStartPosition.CenterScreen; BackColor = Color.FromArgb(243, 246, 249);
         store = new LocalStore(Path.Combine(folder, "customers.db")); sync = new SyncClient(http, store);

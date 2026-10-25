@@ -6,10 +6,12 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Rakam.CustomerApp</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0</Version>
+    <ApplicationIcon>Assets/rakam.ico</ApplicationIcon>
+    <Version>0.2.1</Version>
     <Product>ثبت مراجعان راکام</Product>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets/rakam.ico" LogicalName="Rakam.CustomerApp.rakam.ico" />
     <ProjectReference Include="../Rakam.CustomerApp.Core/Rakam.CustomerApp.Core.csproj" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
     <Content Include="../../ui/**"><Link>ui/%(RecursiveDir)%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><ExcludeFromSingleFile>true</ExcludeFromSingleFile></Content>

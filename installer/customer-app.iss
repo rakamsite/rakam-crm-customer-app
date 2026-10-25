@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0"
+#define AppVersion "0.2.1"
 #define AppExe "Rakam.CustomerApp.exe"
 
 [Setup]
@@ -24,13 +24,14 @@ CloseApplicationsFilter=Rakam.CustomerApp.exe
 RestartApplications=no
 UninstallDisplayIcon={app}\{#AppExe}
 SetupLogging=yes
+SetupIconFile=..\src\Rakam.CustomerApp.Windows\Assets\rakam.ico
 
 [Files]
 Source: "..\dist\Rakam-Customer-App\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{userdesktop}\ثبت مراجعان راکام"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
-Name: "{userprograms}\ثبت مراجعان راکام"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
+Name: "{userdesktop}\ثبت مراجعان راکام"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; IconFilename: "{app}\{#AppExe}"; IconIndex: 0
+Name: "{userprograms}\ثبت مراجعان راکام"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; IconFilename: "{app}\{#AppExe}"; IconIndex: 0
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Launch Rakam Customer App"; Flags: nowait postinstall skipifsilent
