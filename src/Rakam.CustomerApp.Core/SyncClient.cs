@@ -25,12 +25,14 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
     {
         using var request = new HttpRequestMessage(body is null ? HttpMethod.Get : HttpMethod.Post,
             server + "/api/customer-app/v1/" + path);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        if (!string.IsNullOrEmpty(token)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         if (body is not null) request.Content = new StringContent(Wire.Encode(body), Encoding.UTF8, "application/json");
         using var response = await http.SendAsync(request, cancel);
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                throw new SyncFailure("تعداد تلاش‌ها زیاد شده است؛ کمی بعد با همان کد دوباره تلاش کنید.", false, 429);
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 throw new SyncFailure("اتصال این دستگاه لغو شده یا دسترسی حساب تغییر کرده است؛ با مسئول سامانه تماس بگیرید.", false, (int)response.StatusCode);
             if (response.StatusCode is HttpStatusCode.UnprocessableEntity or HttpStatusCode.Conflict or HttpStatusCode.NotFound)
@@ -51,6 +53,28 @@ public sealed class SyncClient(HttpClient http, LocalStore store)
         }
         return Wire.Decode<T>(await response.Content.ReadAsStringAsync(cancel));
     }
+    public async Task<string> Connect(string server, string code, string installationKey, CancellationToken cancel = default)
+    {
+        server = ServerUrl(server);
+        code = Validation.Digits(code).Trim();
+        if (code.Length != 6 || code.Any(c => c is < '0' or > '9')) throw new InvalidDataException("کد اتصال باید ۶ رقم باشد.");
+        if (installationKey.Length != 64 || installationKey.Any(c => !char.IsAsciiLetterOrDigit(c))) throw new InvalidDataException("شناسه اتصال دستگاه معتبر نیست.");
+        long? expectedUser = null;
+        var binding = store.Setting("binding");
+        if (binding is not null)
+        {
+            var separator = binding.LastIndexOf('|');
+            if (separator < 0 || binding[..separator] != server || !long.TryParse(binding[(separator+1)..], out var user))
+                throw new SyncFailure("این فضای محلی به حساب یا شرکت دیگری متصل است؛ از کاربر ویندوز جدا استفاده کنید.");
+            expectedUser = user;
+        }
+        var result = await Request<PairingToken>(server, "", "pair", new { code, installation_key = installationKey, expected_user_id = expectedUser }, cancel);
+        await Pair(server, result.Token, cancel);
+        return result.Token;
+    }
+
+    private sealed record PairingToken(string Token);
+
     public async Task<Metadata> Pair(string server, string token, CancellationToken cancel = default)
     {
         server = ServerUrl(server);

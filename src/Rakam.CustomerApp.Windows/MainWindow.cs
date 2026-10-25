@@ -22,6 +22,7 @@ public sealed class MainWindow : Form
     private bool syncing;
     private string syncMessage = "اطلاعات روی این دستگاه ذخیره می‌شود";
     private readonly CancellationTokenSource shutdown = new();
+    private sealed record PairingAttempt(string Server, string Code, string InstallationKey);
 
     public MainWindow()
     {
@@ -182,12 +183,31 @@ public sealed class MainWindow : Form
                     _ = Synchronize(); break;
                 case "pair":
                     if (syncing) throw new InvalidOperationException("پس از پایان همگام‌سازی دوباره تلاش کنید.");
-                    var server = SyncClient.ServerUrl(payload.GetProperty("server").GetString() ?? "");
-                    var token = payload.GetProperty("token").GetString()?.Trim() ?? "";
-                    await sync.Pair(server, token, shutdown.Token);
-                    var secretPath = Path.Combine(folder, "connection.bin");
-                    File.WriteAllBytes(secretPath + ".tmp", ProtectedData.Protect(Encoding.UTF8.GetBytes(token), null, DataProtectionScope.CurrentUser));
-                    File.Move(secretPath + ".tmp", secretPath, true);
+                    syncing = true;
+                    try
+                    {
+                        var server = SyncClient.ServerUrl(payload.GetProperty("server").GetString() ?? "");
+                        var code = Validation.Digits(payload.GetProperty("code").GetString() ?? "").Trim();
+                        if (code.Length != 6 || code.Any(c => c is < '0' or > '9')) throw new InvalidDataException("کد اتصال باید ۶ رقم باشد.");
+                        var attemptPath = Path.Combine(folder, "pairing.bin");
+                        PairingAttempt? attempt = null;
+                        if (File.Exists(attemptPath))
+                        {
+                            try { attempt = Wire.Decode<PairingAttempt>(Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(attemptPath), null, DataProtectionScope.CurrentUser))); }
+                            catch (Exception error) when (error is CryptographicException or JsonException or InvalidDataException) { }
+                        }
+                        if (attempt is null || attempt.Server != server || attempt.Code != code)
+                            attempt = new PairingAttempt(server, code, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)));
+                        // Persist the private attempt before HTTP so a lost response can be retried safely.
+                        File.WriteAllBytes(attemptPath + ".tmp", ProtectedData.Protect(Encoding.UTF8.GetBytes(Wire.Encode(attempt)), null, DataProtectionScope.CurrentUser));
+                        File.Move(attemptPath + ".tmp", attemptPath, true);
+                        var token = await sync.Connect(server, code, attempt.InstallationKey, shutdown.Token);
+                        var secretPath = Path.Combine(folder, "connection.bin");
+                        File.WriteAllBytes(secretPath + ".tmp", ProtectedData.Protect(Encoding.UTF8.GetBytes(token), null, DataProtectionScope.CurrentUser));
+                        File.Move(secretPath + ".tmp", secretPath, true);
+                        try { File.Delete(attemptPath); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+                    }
+                    finally { syncing = false; }
                     result = State(); _ = Synchronize(); break;
                 case "sync": _ = Synchronize(); result = State(); break;
                 case "export":

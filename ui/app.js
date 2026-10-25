@@ -251,8 +251,8 @@ for (const [id, action] of [['sync-button', 'sync'], ['export-button', 'export']
 $('connection-form').addEventListener('submit', async event => {
   event.preventDefault(); $('pair-button').disabled = true;
   try {
-    render(await call('pair', { server: $('server-url').value, token: $('connection-token').value }));
-    $('connection-token').value = ''; toast('اتصال ذخیره شد؛ همگام‌سازی در پس‌زمینه شروع می‌شود.');
+    render(await call('pair', { server: $('server-url').value, code: $('connection-code').value }));
+    $('connection-code').value = ''; toast('اتصال ذخیره شد؛ همگام‌سازی در پس‌زمینه شروع می‌شود.');
   } catch (error) { toast(error.message, true); }
   finally { $('pair-button').disabled = false; }
 });

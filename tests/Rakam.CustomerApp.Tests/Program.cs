@@ -86,6 +86,7 @@ try
     try { await otherUser.Pair("https://crm.example.com", token); throw new Exception("binding bypass"); }
     catch (SyncFailure) { Check(true, "cross-account binding refused"); }
     await OfficeTests.Run(root, Check);
+    await PairingTests.Run(root, Check);
     Console.WriteLine($"All {passed} checks passed.");
 }
 finally { Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }

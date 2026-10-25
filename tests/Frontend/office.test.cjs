@@ -68,3 +68,17 @@ test('cached office records render even when metadata arrives before the office 
  assert.equal(document.querySelector('[data-office-tab=topics]').getAttribute('aria-pressed'),'true');
  await window.happyDOM.abort();
 });
+
+test('connection form accepts a six-digit Persian code and never asks for the long credential',async()=>{
+ const {window,document,calls}=await fixture();
+ document.querySelector('[data-page=settings]').click();
+ const code=document.getElementById('connection-code');
+ assert.equal(code.maxLength,6);assert.equal(code.getAttribute('inputmode'),'numeric');
+ code.value='۰۱۲۳۴۵';
+ document.getElementById('connection-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
+ await wait(()=>calls.some(x=>x.action==='pair'));
+ const payload=calls.find(x=>x.action==='pair').payload;
+ assert.equal(payload.code,'۰۱۲۳۴۵');assert.equal('token' in payload,false);
+ await wait(()=>code.value==='');
+ await window.happyDOM.abort();
+});

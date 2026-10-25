@@ -21,7 +21,7 @@
     <button class="nav" data-page="office" hidden><span>▤</span>اتوماسیون داخلی</button>
     <button class="nav" data-page="settings"><span>⚙</span>اتصال و پشتیبان</button>
   </nav>
-  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>Rakam CRM · ۰.۲.۲</small></div></div>
+  <div class="sidebar-bottom"><div class="avatar" id="avatar">ر</div><div><b id="agent-name">ثبت آفلاین</b><small>Rakam CRM · ۰.۲.۳</small></div></div>
 </aside>
 <main>
   <header>
@@ -86,10 +86,11 @@
   </section>
   <section id="settings" class="page" hidden>
     <div class="settings-grid">
-      <form class="card" id="connection-form"><span class="eyebrow">اتصال امن</span><h2>Rakam CRM را متصل کنید</h2><p class="muted">در CRM وارد «تنظیمات ← ثبت مراجعان و برنامه ویندوز» شوید و برای این دستگاه کلید بسازید.</p>
+      <form class="card" id="connection-form"><span class="eyebrow">اتصال امن</span><h2>Rakam CRM را متصل کنید</h2><p class="muted">در CRM وارد «تنظیمات ← ثبت مراجعان و برنامه ویندوز» شوید و برای این دستگاه کد اتصال بسازید.</p>
         <label>آدرس CRM<input id="server-url" type="url" dir="ltr" required placeholder="https://crm.safaeico.com"></label>
-        <label>کلید اتصال<input id="connection-token" type="password" dir="ltr" required autocomplete="off" minlength="64" maxlength="64" placeholder="کلید اختصاصی این دستگاه"></label>
-        <button class="btn primary" type="submit" id="pair-button">بررسی و ذخیره اتصال</button><p id="connection-state" class="hint"></p>
+        <label>کد اتصال ۶ رقمی<input id="connection-code" type="text" inputmode="numeric" dir="ltr" required autocomplete="one-time-code" minlength="6" maxlength="6" pattern="[0-9۰-۹٠-٩]{6}" placeholder="مثلاً ۱۲۳۴۵۶"></label>
+        <p class="hint">کد را یک‌بار وارد کنید. کد برای اتصال اولیه ۱۰ دقیقه فرصت دارد؛ پس از اتصال، ورود مجدد یا تمدید لازم نیست.</p>
+        <button class="btn primary" type="submit" id="pair-button">اتصال دستگاه</button><p id="connection-state" class="hint"></p>
       </form>
       <div class="card"><span class="eyebrow">اطلاعات شما</span><h2>پشتیبان و بازیابی</h2><p class="muted">پشتیبان روزانه روی این دستگاه ساخته می‌شود. برای محافظت در برابر خرابی کامپیوتر، یک نسخه در پوشه یا حافظه دیگری نگه دارید.</p>
         <button class="btn" id="backup-button">ذخیره پشتیبان در پوشه دلخواه</button>
