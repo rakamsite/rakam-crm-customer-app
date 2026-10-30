@@ -81,11 +81,42 @@ jobs:
         with:
           name: Rakam-CRM-Setup-Windows-x64
           path: 'dist/installer/Rakam CRM Setup.exe'
-          retention-days: 30
+          retention-days: 14
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
           name: Rakam-CRM-Windows-x64
           path: dist/Rakam-CRM/
-          retention-days: 30
+          retention-days: 14
 
+  cleanup-old-artifacts:
+    name: Keep only the latest successful build artifacts
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Remove superseded build artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const names = new Set(["Rakam-CRM-Setup-Windows-x64","Rakam-CRM-Windows-x64","Rakam-Customer-App-Setup-Windows-x64","Rakam-Customer-App-Windows-x64"]);
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              ...context.repo,
+              per_page: 100
+            });
+            let deleted = 0;
+            for (const artifact of artifacts) {
+              // Preserve this run, newer runs, and unrelated artifacts.
+              if (!names.has(artifact.name) || artifact.expired ||
+                  !artifact.workflow_run || artifact.workflow_run.id >= context.runId) continue;
+              await github.rest.actions.deleteArtifact({
+                ...context.repo,
+                artifact_id: artifact.id
+              });
+              deleted++;
+              core.info('Deleted previous artifact: ' + artifact.name + ' (' + artifact.id + ')');
+            }
+            core.info('Previous artifacts removed: ' + deleted);
